@@ -55,6 +55,15 @@
       }
     },
     {
+      "identity" : "ggpackage-shareddto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Captain-Yellow/GGPackage-SharedDTO.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a525bcee90c5c9ddc93838ed814d444710db9d48"
+      }
+    },
+    {
       "identity" : "jwt",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt.git",

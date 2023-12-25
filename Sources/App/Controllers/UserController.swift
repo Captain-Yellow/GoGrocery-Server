@@ -8,6 +8,7 @@
 import Foundation
 import Fluent
 import Vapor
+import GoGrocerySharedDTO
 
 class UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -24,13 +25,17 @@ class UserController: RouteCollection {
         guard let existedUser = try await User.query(on: req.db)
             .filter(\.$username == user.username)
             .first() else {
-            throw Abort(.notFound)
+            print("User not Exist.")
+            return LoginResponceDTO(error: true, reason: "User not Exist.")
+//            throw Abort(.notFound)
         }
         
         let passCheck = try await req.password.async.verify(user.password, created: existedUser.password)
         
         if !passCheck {
-            throw Abort(.unauthorized)
+            print("Password is Incorrect")
+            return LoginResponceDTO(error: true, reason: "Password is Incorrect")
+//            throw Abort(.unauthorized)
         }
         
         let res = try AuthPayload(subject: .init(value: "Commen User"), expiration: .init(value: .distantFuture), userId: existedUser.requireID())

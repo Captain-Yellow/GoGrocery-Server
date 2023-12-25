@@ -12,9 +12,11 @@ public func configure(_ app: Application) async throws {
 
     // creat migation
     app.migrations.add(CreateUserTableMigration())
+    app.migrations.add(CreateGroceryCategoryTableMigration())
     
     // register the route collection
     try app.register(collection: UserController())
+    try app.register(collection: GroceryController())
     
     // set jwt token generation method
     app.jwt.signers.use(.hs256(key: "GOGROCERYSERVERAPP"))
