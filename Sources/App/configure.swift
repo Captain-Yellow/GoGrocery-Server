@@ -13,6 +13,7 @@ public func configure(_ app: Application) async throws {
     // creat migation
     app.migrations.add(CreateUserTableMigration())
     app.migrations.add(CreateGroceryCategoryTableMigration())
+    app.migrations.add(CreateGroceryItemTableMigration())
     
     // register the route collection
     try app.register(collection: UserController())

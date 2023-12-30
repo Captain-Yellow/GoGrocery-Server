@@ -27,7 +27,7 @@ class GroceryController: RouteCollection {
         }
         
         let groceryCategoryRequestDTO = try req.content.decode(GroceryCategoryRequestDTO.self)
-        
+        print(groceryCategoryRequestDTO)
         let groceryCategory = GroceryCategory(title: groceryCategoryRequestDTO.title, colorCode: groceryCategoryRequestDTO.colorCode, userId: userId)
         
         try await groceryCategory.save(on: req.db)
