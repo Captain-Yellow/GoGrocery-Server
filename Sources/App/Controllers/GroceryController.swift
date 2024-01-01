@@ -58,6 +58,15 @@ class GroceryController: RouteCollection {
             throw Abort(.notFound)
         }
         
+        guard let groceryItem = try await GroceryItem.query(on: req.db)
+            .filter(\.$user.$id == userId)
+            .filter(\.$id == groceryCategoryId)
+            .first() else {
+                throw Abort(.notFound)
+            }
+        
+        groceryItem.delete(on: req.db)
+        
         return
     }
     
