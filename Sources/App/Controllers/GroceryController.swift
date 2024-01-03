@@ -12,7 +12,7 @@ import GoGrocerySharedDTO
 
 class GroceryController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let groceryCollection = routes.grouped("users", ":userId")
+        let groceryCollection = routes.grouped("users", ":userId").grouped(JWTAuthenticator())
         
         groceryCollection.post("grocery_categories", use: saveGroceryCategory)
         
@@ -22,12 +22,12 @@ class GroceryController: RouteCollection {
         
         groceryCollection.post("grocery_categories", ":groceryCategoryId", "grocery_items", use: saveGroceryItems)
         
-        groceryCollection.get("grocery_categories", ":groceryCategoryId", "grocery_items", use: getGroceryItems)
+        groceryCollection.get("grocery_categories", ":groceryCategoryId", "grocery_items", use: getGroceryItemsByGroceryCategory)
         
         groceryCollection.delete("grocery_categories", ":groceryCategoryId", "grocery_items", ":itemId", use: deleteItem)
     }
     
-    func getGroceryItems(req: Request) async throws -> [GroceryItemResponseDTO] {
+    func getGroceryItemsByGroceryCategory(req: Request) async throws -> [GroceryItemResponseDTO] {
         guard let userId = req.parameters.get("userId", as: UUID.self),
               let categoryId = req.parameters.get("groceryCategoryId", as: UUID.self) else {
             throw Abort(.badRequest)
@@ -37,19 +37,22 @@ class GroceryController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        let cetegoryItems = try await GroceryItem.query(on: req.db)
-            .filter(\.$grocerycategory.$id == categoryId)
-//            .filter(\.$grocerycategory.$user.$d == userId)
+        guard let groceryCetegory = try await GroceryCategory.query(on: req.db)
+            .filter(\.$user.$id == userId)
+            .filter(\.$id == categoryId)
+            .first() else {
+            throw Abort(.notFound)
+        }
+        
+        return try await GroceryItem.query(on: req.db)
+            .filter(\.$groceryCategory.$id == groceryCetegory.id!)
             .all()
-        
-        let groceryItemsRsponseDTO = cetegoryItems.compactMap(GroceryItemResponseDTO.init)
-        
-        return groceryItemsRsponseDTO
+            .compactMap(GroceryItemResponseDTO.init)
     }
     
     func deleteItem(req: Request) async throws -> GroceryItemResponseDTO {
-        guard let userId = req.parameters.get("userId"),
-              let categoryId = req.parameters.get("groceryCategoryId"), 
+        guard let userId = req.parameters.get("userId", as: UUID.self),
+              let categoryId = req.parameters.get("groceryCategoryId", as: UUID.self),
               let itemId = req.parameters.get("itemId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
@@ -58,16 +61,27 @@ class GroceryController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        guard let groceryItem = try await GroceryItem.query(on: req.db)
+        guard let groceryCetegory = try await GroceryCategory.query(on: req.db)
             .filter(\.$user.$id == userId)
-            .filter(\.$id == groceryCategoryId)
+            .filter(\.$id == categoryId)
             .first() else {
                 throw Abort(.notFound)
             }
         
-        groceryItem.delete(on: req.db)
+        guard let groceryItem = try await GroceryItem.query(on: req.db)
+            .filter(\.$groceryCategory.$id == groceryCetegory.id!)
+            .filter(\.$id == categoryId)
+            .first() else {
+            throw Abort(.notFound)
+        }
         
-        return
+        try await groceryItem.delete(on: req.db)
+        
+        guard let deletedItem = GroceryItemResponseDTO(groceryItem) else {
+            throw Abort(.internalServerError)
+        }
+        
+        return deletedItem
     }
     
     func saveGroceryItems(req: Request) async throws -> GroceryItemResponseDTO {

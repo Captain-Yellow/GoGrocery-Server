@@ -25,7 +25,7 @@ final class GroceryItem: Model, Content, Validatable {
     var quantity: Int
     
     @Parent(key: "grocery_category_id")
-    var grocerycategory: GroceryCategory
+    var groceryCategory: GroceryCategory
     
     init() {    }
     
@@ -34,7 +34,7 @@ final class GroceryItem: Model, Content, Validatable {
         self.title = title
         self.price = price
         self.quantity = quantity
-        self.grocerycategory.id = groceryCategoryId
+        self.$groceryCategory.id = groceryCategoryId
     }
     
     static func validations(_ validations: inout Validations) {
